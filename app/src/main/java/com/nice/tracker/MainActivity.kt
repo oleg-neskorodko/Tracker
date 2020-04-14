@@ -35,6 +35,8 @@ class MainActivity : AppCompatActivity() {
     val sdf = SimpleDateFormat("HH:mm:ss")
     val MY_PERMISSIONS_ACCESS_LOCATION = 251
 
+    var permissionOK = false
+
     //var counter = 0
     //private lateinit var locationManager: LocationManager
     //private lateinit var locationListener: LocationListener
@@ -47,7 +49,7 @@ class MainActivity : AppCompatActivity() {
 
         logTV.setText("checking location")
 
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+/*       fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
             // Got last known location. In some rare situations this can be null.
@@ -55,7 +57,7 @@ class MainActivity : AppCompatActivity() {
             if (location != null) {
                 logTV.setText("location exists!")
             }
-        }
+        }*/
 
 /*        val locationRequest : LocationRequest
         locationRequest = LocationRequest.create();
@@ -112,7 +114,8 @@ class MainActivity : AppCompatActivity() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-
+            permissionOK = true
+            getDeviceLocation()
         } else {
             ActivityCompat.requestPermissions(
                 this,
@@ -135,6 +138,26 @@ class MainActivity : AppCompatActivity() {
                 10.0F, locationListener
             )
         }*/
+    }
+
+    open fun getDeviceLocation() {
+        if (permissionOK) {
+            val locationResult =
+                LocationServices.getFusedLocationProviderClient(this).lastLocation
+            locationResult.addOnCompleteListener {
+
+                if (it.isSuccessful)
+                    it.result?.let { location ->
+                        latTV.setText(latName + location.latitude)
+                        longTV.setText(longName + location.longitude)
+                        logTV.setText("location success")
+                    }
+                else
+                    logTV.setText("location fail")
+            }
+        } else {
+            logTV.setText("location fail")
+        }
     }
 
 
