@@ -9,10 +9,8 @@ import android.os.Message
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Task
 import kotlinx.android.synthetic.main.activity_main.*
 import java.text.SimpleDateFormat
 import java.util.*
@@ -40,7 +38,7 @@ class MainActivity : AppCompatActivity() {
     //var counter = 0
     //private lateinit var locationManager: LocationManager
     //private lateinit var locationListener: LocationListener
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationResult: Task<Location>
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +46,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         logTV.setText("checking location")
+
+        locationResult = LocationServices.getFusedLocationProviderClient(this).lastLocation
 
 /*       fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -119,7 +119,10 @@ class MainActivity : AppCompatActivity() {
         } else {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
                 MY_PERMISSIONS_ACCESS_LOCATION
             )
         }
@@ -194,9 +197,9 @@ class MainActivity : AppCompatActivity() {
                             ) == PackageManager.PERMISSION_GRANTED
                         ) {
                             permissionGranted = true
-                            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
-                                    // Got last known location. In some rare situations this can be null.
-                                    if (location != null) {
+                            locationResult.addOnCompleteListener {
+                                if (it.isSuccessful) {
+                                    it.result?.let { location ->
                                         locExists = true
                                         if (oldLocation.latitude != 0.0) {
 
@@ -210,13 +213,15 @@ class MainActivity : AppCompatActivity() {
                                             val speed = distance / (difference / 1000.0)
                                             speedTV.setText(speedName + speed)
                                             distanceTV.setText(distanceName + distance)
-                                        } else {
-                                            permissionGranted = false
-                                            oldLocation = location
                                         }
+                                    } ?: run {
+                                        permissionGranted = false
                                     }
-                                logTV.setText("permission granted = $permissionGranted , locExists = $locExists")
+
+                                    logTV.setText("permission granted = $permissionGranted , locExists = $locExists")
                                 }
+
+                            }
                         }
                         //logTV.setText("permission granted = $permissionGranted , locExists = $locExists")
 
